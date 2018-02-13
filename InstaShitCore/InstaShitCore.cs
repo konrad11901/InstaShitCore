@@ -10,19 +10,22 @@ using System.Linq;
 
 namespace InstaShitCore
 {
-    public abstract class InstaShitCore
+    public class InstaShitCore
     {
         private readonly HttpClient _client;
         private readonly HttpClient _synonymsApiClient;
-        private readonly Random _rndGenerator;
+        private readonly Random _rndGenerator = new Random();
         private readonly Settings _settings;
         private string _childId;
         private readonly Dictionary<string, int> _sessionCount;
         private readonly Dictionary<string, string> _words;
         private readonly Dictionary<string, int> _wordsCount;
         private readonly List<List<int>> _mistakesCount;
+        private readonly string _baseLocation;
 
-        protected InstaShitCore(bool ignoreSettings = false)
+        /// <param name="baseLocation">Directory where the user files are located.</param>
+        /// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
+        protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
         {
             var handler = new HttpClientHandler();
             _client = new HttpClient(handler)
@@ -33,7 +36,7 @@ namespace InstaShitCore
             {
                 BaseAddress = new Uri("https://api.datamuse.com")
             };
-            _rndGenerator = new Random();
+            _baseLocation = baseLocation;
             _settings = GetSettings(ignoreSettings);
             if (File.Exists(GetFileLocation("wordsHistory.json")))
                 _sessionCount = JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(GetFileLocation("wordsHistory.json")));
@@ -58,7 +61,7 @@ namespace InstaShitCore
         /// </summary>
         /// <param name="fileName">Name of the file.</param>
         /// <returns>The location of specified file.</returns>
-        protected abstract string GetFileLocation(string fileName);
+        protected string GetFileLocation(string fileName) => Path.Combine(_baseLocation, fileName);
         /// <summary>
         /// Writes the specified string value to the trace listeners if debug mode is turned on.
         /// </summary>
@@ -285,10 +288,7 @@ namespace InstaShitCore
         /// Gets the time to wait before continuing.
         /// </summary>
         /// <returns>The number of miliseconds to wait.</returns>
-        public int GetSleepTime()
-        {
-            return _rndGenerator.Next(_settings.MinimumSleepTime, _settings.MaximumSleepTime + 1);
-        }
+        public int SleepTime => _rndGenerator.Next(_settings.MinimumSleepTime, _settings.MaximumSleepTime + 1);
         /// <summary>
         /// Gets the information about the answer to the question.
         /// </summary>
