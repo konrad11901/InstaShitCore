@@ -1,4 +1,4 @@
-﻿// InstaShit - Bot for Instaling which automatically solves daily tasks
+﻿// InstaShitCore - Core of InstaShit, a bot for Insta.Ling which solves daily sessions
 // Created by Konrad Krawiec
 
 namespace InstaShitCore
