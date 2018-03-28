@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
 using System.Linq;
+using System.Net;
 
 namespace InstaShitCore
 {
     public class InstaShitCore
     {
-        // PRIVATE FIELDS
+		// PRIVATE FIELDS
+		private readonly CookieContainer cookieContainer;
+		private readonly HttpClientHandler handler;
         private readonly HttpClient client;
         private readonly HttpClient synonymsApiClient;
         private readonly Random rndGenerator = new Random();
@@ -23,17 +26,22 @@ namespace InstaShitCore
         private readonly Dictionary<string, int> wordsCount;
         private readonly List<List<int>> mistakesCount;
         private readonly string baseLocation;
+		private string sessionId;
 
-        // PUBLIC AND PROTECTED MEMBERS
+		// PUBLIC AND PROTECTED MEMBERS
 
-        /// <summary>
-        /// Creates an instance of the InstaShitCore class.
-        /// </summary>
-        /// <param name="baseLocation">Directory where the user files are located.</param>
-        /// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
-        protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
-        {
-            var handler = new HttpClientHandler();
+		/// <summary>
+		/// Creates an instance of the InstaShitCore class.
+		/// </summary>
+		/// <param name="baseLocation">Directory where the user files are located.</param>
+		/// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
+		protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
+		{
+			cookieContainer = new CookieContainer();
+			handler = new HttpClientHandler()
+			{
+				CookieContainer = cookieContainer
+		    };
             client = new HttpClient(handler)
             {
                 BaseAddress = new Uri("https://instaling.pl")
@@ -128,6 +136,7 @@ namespace InstaShitCore
                 return false;
             childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
             Debug($"childID = {childId}");
+			sessionId = cookieContainer.GetCookies(new Uri("https://instaling.pl"))["PHPSESSID"].Value;
             return true;
         }
 
@@ -146,7 +155,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("start", ""),
                 new KeyValuePair<string, string>("end", "")
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/init_session.php", content);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/init_session.php", content, true);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             Debug("JSONResponse from POST /ling2/server/actions/init_session.php: " + resultString);
             return (bool)jsonResponse["is_new"];
@@ -208,10 +217,10 @@ namespace InstaShitCore
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-                new KeyValuePair<string, string>("version", "43yo4ihw"),
+				new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content, true);
             Debug(resultString);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             return (jsonResponse["grade"].ToString() == "1" && answer.Word == answer.AnswerWord)
@@ -232,17 +241,25 @@ namespace InstaShitCore
             var result = await client.PostAsync("/ling2/server/actions/grade_report.php", content);
             var resultString = await result.Content.ReadAsStringAsync();
             Debug(resultString);
-            var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
-            var childResults = new ChildResults();
-            if (jsonResponse.ContainsKey("prev_mark"))
-                childResults.PreviousMark = jsonResponse["prev_mark"].ToString();
-            childResults.DaysOfWork = jsonResponse["work_week_days"].ToString();
-            childResults.ExtraParentWords = jsonResponse["parent_words_extra"].ToString();
-            childResults.TeacherWords = jsonResponse["teacher_words"].ToString();
-            childResults.ParentWords = jsonResponse["parent_words"].ToString();
-            childResults.CurrrentMark = jsonResponse["current_mark"].ToString();
-            childResults.WeekRemainingDays = jsonResponse["week_remaining_days"].ToString();
-            return childResults;
+			try
+			{
+				var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
+                var childResults = new ChildResults();
+                if (jsonResponse.ContainsKey("prev_mark"))
+                    childResults.PreviousMark = jsonResponse["prev_mark"].ToString();
+                childResults.DaysOfWork = jsonResponse["work_week_days"].ToString();
+                childResults.ExtraParentWords = jsonResponse["parent_words_extra"].ToString();
+                childResults.TeacherWords = jsonResponse["teacher_words"].ToString();
+                childResults.ParentWords = jsonResponse["parent_words"].ToString();
+                childResults.CurrrentMark = jsonResponse["current_mark"].ToString();
+                childResults.WeekRemainingDays = jsonResponse["week_remaining_days"].ToString();
+				return childResults;
+			}
+			catch
+			{
+				Debug("Error occured while trying to parse results");
+				return new ChildResults();
+			}
         }
 
         /// <summary>
@@ -322,14 +339,16 @@ namespace InstaShitCore
             }
         }
 
-        /// <summary>
-        /// Sends the POST request to the specified URL and returns the result of this request as a string value.
-        /// </summary>
-        /// <param name="requestUri">The request URL></param>
-        /// <param name="content">The content of this POST Request</param>
-        /// <returns>Result of POST request.</returns>
-        private async Task<string> GetPostResultAsync(string requestUri, HttpContent content)
+		/// <summary>
+		/// Sends the POST request to the specified URL and returns the result of this request as a string value.
+		/// </summary>
+		/// <param name="requestUri">The request URL></param>
+		/// <param name="content">The content of this POST Request</param>
+		/// <returns>Result of POST request.</returns>
+		private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
         {
+			if (addSessionId)
+				content.Headers.Add("X-Authorization", sessionId);
             var result = await client.PostAsync(requestUri, content);
             return await result.Content.ReadAsStringAsync();
         }
@@ -345,7 +364,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("date", GetJsTime().ToString())
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/generate_next_word.php", content);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/generate_next_word.php", content, true);
             Debug("Result from generate_next_word.php: " + resultString);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             return jsonResponse;
