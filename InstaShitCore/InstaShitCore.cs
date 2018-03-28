@@ -1,4 +1,4 @@
-﻿// InstaShitCore - Core of InstaShit, a bot for Insta.Ling which solves daily sessions
+// InstaShitCore - Core of InstaShit, a bot for Insta.Ling which solves daily sessions
 // Created by Konrad Krawiec
 using System;
 using System.Collections.Generic;
@@ -13,9 +13,9 @@ namespace InstaShitCore
 {
     public class InstaShitCore
     {
-		// PRIVATE FIELDS
-		private readonly CookieContainer cookieContainer;
-		private readonly HttpClientHandler handler;
+	// PRIVATE FIELDS
+	private readonly CookieContainer cookieContainer;
+	private readonly HttpClientHandler handler;
         private readonly HttpClient client;
         private readonly HttpClient synonymsApiClient;
         private readonly Random rndGenerator = new Random();
@@ -26,22 +26,22 @@ namespace InstaShitCore
         private readonly Dictionary<string, int> wordsCount;
         private readonly List<List<int>> mistakesCount;
         private readonly string baseLocation;
-		private string sessionId;
+	private string sessionId;
 
-		// PUBLIC AND PROTECTED MEMBERS
+	// PUBLIC AND PROTECTED MEMBERS
 
-		/// <summary>
-		/// Creates an instance of the InstaShitCore class.
-		/// </summary>
-		/// <param name="baseLocation">Directory where the user files are located.</param>
-		/// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
-		protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
-		{
-			cookieContainer = new CookieContainer();
-			handler = new HttpClientHandler()
-			{
-				CookieContainer = cookieContainer
-		    };
+	/// <summary>
+	/// Creates an instance of the InstaShitCore class.
+	/// </summary>
+	/// <param name="baseLocation">Directory where the user files are located.</param>
+	/// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
+	protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
+	{
+	    cookieContainer = new CookieContainer();
+	    handler = new HttpClientHandler()
+	    {
+                CookieContainer = cookieContainer
+	    };
             client = new HttpClient(handler)
             {
                 BaseAddress = new Uri("https://instaling.pl")
@@ -113,7 +113,6 @@ namespace InstaShitCore
             if (!ignoreSettings && File.Exists(GetFileLocation("settings.json")))
                 return JsonConvert.DeserializeObject<Settings>(File.ReadAllText(GetFileLocation("settings.json")));
             return null;
-
         }
 
         /// <summary>
@@ -136,7 +135,7 @@ namespace InstaShitCore
                 return false;
             childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
             Debug($"childID = {childId}");
-			sessionId = cookieContainer.GetCookies(new Uri("https://instaling.pl"))["PHPSESSID"].Value;
+            sessionId = cookieContainer.GetCookies(new Uri("https://instaling.pl"))["PHPSESSID"].Value;
             return true;
         }
 
@@ -217,7 +216,7 @@ namespace InstaShitCore
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-				new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
+		new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
             var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content, true);
@@ -241,9 +240,9 @@ namespace InstaShitCore
             var result = await client.PostAsync("/ling2/server/actions/grade_report.php", content);
             var resultString = await result.Content.ReadAsStringAsync();
             Debug(resultString);
-			try
-			{
-				var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
+            try
+            {
+                var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
                 var childResults = new ChildResults();
                 if (jsonResponse.ContainsKey("prev_mark"))
                     childResults.PreviousMark = jsonResponse["prev_mark"].ToString();
@@ -253,13 +252,13 @@ namespace InstaShitCore
                 childResults.ParentWords = jsonResponse["parent_words"].ToString();
                 childResults.CurrrentMark = jsonResponse["current_mark"].ToString();
                 childResults.WeekRemainingDays = jsonResponse["week_remaining_days"].ToString();
-				return childResults;
-			}
-			catch
-			{
-				Debug("Error occured while trying to parse results");
-				return new ChildResults();
-			}
+		return childResults;
+            }
+            catch
+	    {
+                Debug("Error occured while trying to parse results");
+                return new ChildResults();
+	    }
         }
 
         /// <summary>
@@ -339,16 +338,16 @@ namespace InstaShitCore
             }
         }
 
-		/// <summary>
-		/// Sends the POST request to the specified URL and returns the result of this request as a string value.
-		/// </summary>
-		/// <param name="requestUri">The request URL></param>
-		/// <param name="content">The content of this POST Request</param>
-		/// <returns>Result of POST request.</returns>
-		private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
+	/// <summary>
+	/// Sends the POST request to the specified URL and returns the result of this request as a string value.
+	/// </summary>
+	/// <param name="requestUri">The request URL></param>
+	/// <param name="content">The content of this POST Request</param>
+	/// <returns>Result of POST request.</returns>
+	private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
         {
-			if (addSessionId)
-				content.Headers.Add("X-Authorization", sessionId);
+	    if (addSessionId)
+	        content.Headers.Add("X-Authorization", sessionId);
             var result = await client.PostAsync(requestUri, content);
             return await result.Content.ReadAsStringAsync();
         }
