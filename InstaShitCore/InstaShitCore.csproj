@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Konrad Krawiec</Authors>
     <Company />
     <Description>Core of InstaShit - bot for Insta.Ling which solves daily sessions.</Description>
     <PackageProjectUrl>https://instashit.pl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/konrad11901/InstaShitCore</RepositoryUrl>
-    <PackageReleaseNotes>Critical fix (Insta.Ling update)</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed getting session results</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
 
 </Project>

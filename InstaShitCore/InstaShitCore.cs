@@ -13,9 +13,9 @@ namespace InstaShitCore
 {
     public class InstaShitCore
     {
-	// PRIVATE FIELDS
-	private readonly CookieContainer cookieContainer;
-	private readonly HttpClientHandler handler;
+	    // PRIVATE FIELDS
+	    private readonly CookieContainer cookieContainer;
+	    private readonly HttpClientHandler handler;
         private readonly HttpClient client;
         private readonly HttpClient synonymsApiClient;
         private readonly Random rndGenerator = new Random();
@@ -26,22 +26,22 @@ namespace InstaShitCore
         private readonly Dictionary<string, int> wordsCount;
         private readonly List<List<int>> mistakesCount;
         private readonly string baseLocation;
-	private string sessionId;
+	    private string sessionId;
 
-	// PUBLIC AND PROTECTED MEMBERS
+	    // PUBLIC AND PROTECTED MEMBERS
 
-	/// <summary>
-	/// Creates an instance of the InstaShitCore class.
-	/// </summary>
-	/// <param name="baseLocation">Directory where the user files are located.</param>
-	/// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
-	protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
-	{
-	    cookieContainer = new CookieContainer();
-	    handler = new HttpClientHandler()
+	    /// <summary>
+	    /// Creates an instance of the InstaShitCore class.
+	    /// </summary>
+	    /// <param name="baseLocation">Directory where the user files are located.</param>
+	    /// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
+	    protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
 	    {
+	        cookieContainer = new CookieContainer();
+	        handler = new HttpClientHandler()
+	        {
                 CookieContainer = cookieContainer
-	    };
+	        };
             client = new HttpClient(handler)
             {
                 BaseAddress = new Uri("https://instaling.pl")
@@ -216,7 +216,7 @@ namespace InstaShitCore
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-		new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
+		        new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
             var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content, true);
@@ -237,8 +237,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("date", GetJsTime().ToString())
             });
-            var result = await client.PostAsync("/ling2/server/actions/grade_report.php", content);
-            var resultString = await result.Content.ReadAsStringAsync();
+            var resultString = await GetPostResultAsync("/ling2/server/actions/grade_report.php", content, true);
             Debug(resultString);
             try
             {
@@ -252,13 +251,13 @@ namespace InstaShitCore
                 childResults.ParentWords = jsonResponse["parent_words"].ToString();
                 childResults.CurrrentMark = jsonResponse["current_mark"].ToString();
                 childResults.WeekRemainingDays = jsonResponse["week_remaining_days"].ToString();
-		return childResults;
+		        return childResults;
             }
             catch
-	    {
+	        {
                 Debug("Error occured while trying to parse results");
                 return new ChildResults();
-	    }
+	        }
         }
 
         /// <summary>
@@ -338,16 +337,16 @@ namespace InstaShitCore
             }
         }
 
-	/// <summary>
-	/// Sends the POST request to the specified URL and returns the result of this request as a string value.
-	/// </summary>
-	/// <param name="requestUri">The request URL></param>
-	/// <param name="content">The content of this POST Request</param>
-	/// <returns>Result of POST request.</returns>
-	private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
+        /// <summary>
+	    /// Sends the POST request to the specified URL and returns the result of this request as a string value.
+	    /// </summary>
+	    /// <param name="requestUri">The request URL></param>
+	    /// <param name="content">The content of this POST Request</param>
+	    /// <returns>Result of POST request.</returns>
+	    private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
         {
-	    if (addSessionId)
-	        content.Headers.Add("X-Authorization", sessionId);
+	        if (addSessionId)
+	            content.Headers.Add("X-Authorization", sessionId);
             var result = await client.PostAsync(requestUri, content);
             return await result.Content.ReadAsStringAsync();
         }
