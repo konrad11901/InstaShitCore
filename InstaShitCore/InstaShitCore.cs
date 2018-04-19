@@ -89,7 +89,7 @@ namespace InstaShitCore
         }
 
         /// <summary>
-        /// Gets the 
+        /// Gets the value that specifies if debug mode is turned on.
         /// </summary>
         protected bool DebugMode => settings.Debug;
 
@@ -116,7 +116,7 @@ namespace InstaShitCore
         }
 
         /// <summary>
-        /// Attempts to login to InstaLing.
+        /// Attempts to login to Insta.Ling.
         /// </summary>
         /// <returns>True if the attempt to login was successful; otherwise, false.</returns>
         public async Task<bool> TryLoginAsync()
@@ -154,7 +154,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("start", ""),
                 new KeyValuePair<string, string>("end", "")
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/init_session.php", content, true);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/init_session.php", content);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             Debug("JSONResponse from POST /ling2/server/actions/init_session.php: " + resultString);
             return (bool)jsonResponse["is_new"];
@@ -216,10 +216,10 @@ namespace InstaShitCore
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-                new KeyValuePair<string, string>("version", "cxb6as4y5rg5"),
+                new KeyValuePair<string, string>("version", "cyh5fh7unfrnu8e"),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content, true);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content);
             Debug(resultString);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             return (jsonResponse["grade"].ToString() == "1" && answer.Word == answer.AnswerWord)
@@ -237,7 +237,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("date", GetJsTime().ToString())
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/grade_report.php", content, true);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/grade_report.php", content);
             Debug(resultString);
             try
             {
@@ -343,10 +343,8 @@ namespace InstaShitCore
         /// <param name="requestUri">The request URL></param>
         /// <param name="content">The content of this POST Request</param>
         /// <returns>Result of POST request.</returns>
-        private async Task<string> GetPostResultAsync(string requestUri, HttpContent content, bool addSessionId = false)
+        private async Task<string> GetPostResultAsync(string requestUri, HttpContent content)
         {
-            if (addSessionId)
-                content.Headers.Add("X-Authorization", sessionId);
             var result = await client.PostAsync(requestUri, content);
             return await result.Content.ReadAsStringAsync();
         }
@@ -362,7 +360,7 @@ namespace InstaShitCore
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("date", GetJsTime().ToString())
             });
-            var resultString = await GetPostResultAsync("/ling2/server/actions/generate_next_word.php", content, true);
+            var resultString = await GetPostResultAsync("/ling2/server/actions/generate_next_word.php", content);
             Debug("Result from generate_next_word.php: " + resultString);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             return jsonResponse;
