@@ -266,7 +266,7 @@ namespace InstaShitCore
         public void SaveSessionData()
         {
             foreach (var key in sessionCount.Keys.ToList())
-                if (sessionCount[key] != -1)
+                if (sessionCount[key] != -1 && wordsCount.ContainsKey(key))
                     sessionCount[key]++;
             File.WriteAllText(GetFileLocation("wordsHistory.json"), JsonConvert.SerializeObject(sessionCount, Formatting.Indented));
             File.WriteAllText(GetFileLocation("wordsDictionary.json"), JsonConvert.SerializeObject(words, Formatting.Indented));
