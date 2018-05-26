@@ -172,9 +172,16 @@ namespace InstaShitCore
         /// <returns>Data about the answer.</returns>
         public async Task<Answer> GetAnswerAsync()
         {
-            var wordData = await GenerateNextWordAsync();
-            if (wordData.ContainsKey("summary"))
-                return null;
+			Dictionary<string, object> wordData;
+            while(true)
+			{
+				wordData = await GenerateNextWordAsync();
+                if (wordData.ContainsKey("summary"))
+                    return null;
+				if (settings.AnswerMarketingQuestions || wordData["type"].ToString() != "marketing")
+					break;
+				Debug("Skipping marketing question");
+			}
             var word = wordData["word"].ToString();
             var wordId = wordData["id"].ToString();
             var answer = new Answer
