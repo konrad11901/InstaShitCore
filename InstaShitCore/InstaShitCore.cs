@@ -7,42 +7,39 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
 using System.Linq;
-using System.Net;
 
 namespace InstaShitCore
 {
     public class InstaShitCore
     {
-        // PRIVATE FIELDS
-        private readonly CookieContainer cookieContainer;
-        private readonly HttpClientHandler handler;
+        // CONST FIELDS
+        private const string InstaLingVersion = "cyh5fh7unfrnu8e";
+
+        // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
         private readonly HttpClient synonymsApiClient;
         private readonly Random rndGenerator = new Random();
         private readonly Settings settings;
-        private string childId;
-        private readonly Dictionary<string, int> sessionCount;
-        private readonly Dictionary<string, string> words;
+        private readonly Dictionary<string, int> wordsHistory;
+        private readonly Dictionary<string, string> wordsDictionary;
         private readonly Dictionary<string, int> wordsCount;
         private readonly List<List<int>> mistakesCount;
-        private readonly string baseLocation;
-        private string sessionId;
+
+        // PRIVATE FIELDS
+        private string childId;
 
         // PUBLIC AND PROTECTED MEMBERS
 
         /// <summary>
         /// Creates an instance of the InstaShitCore class.
         /// </summary>
-        /// <param name="baseLocation">Directory where the user files are located.</param>
-        /// <param name="ignoreSettings">Specifies if settings file should be ignored</param>
-        protected InstaShitCore(string baseLocation, bool ignoreSettings = false)
+        /// <param name="settings">InstaShit settings to use in this instance.</param>
+        /// <param name="wordsDictionary">Words dictionary to use in this instance.</param>
+        /// <param name="wordsHistory">Words history to use in this instance.</param>
+        public InstaShitCore(Settings settings, Dictionary<string, string> wordsDictionary,
+            Dictionary<string, int> wordsHistory)
         {
-            cookieContainer = new CookieContainer();
-            handler = new HttpClientHandler()
-            {
-                CookieContainer = cookieContainer
-            };
-            client = new HttpClient(handler)
+            client = new HttpClient()
             {
                 BaseAddress = new Uri("https://instaling.pl")
             };
@@ -50,33 +47,37 @@ namespace InstaShitCore
             {
                 BaseAddress = new Uri("https://api.datamuse.com")
             };
-            this.baseLocation = baseLocation;
-            settings = GetSettings(ignoreSettings);
-            if (File.Exists(GetFileLocation("wordsHistory.json")))
-                sessionCount = JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(GetFileLocation("wordsHistory.json")));
-            else
-                sessionCount = new Dictionary<string, int>();
-            if (File.Exists(GetFileLocation("wordsDictionary.json")))
-                words = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(GetFileLocation("wordsDictionary.json")));
-            else
-                words = new Dictionary<string, string>();
-            wordsCount = new Dictionary<string, int>();
+            this.settings = settings;
+            this.wordsDictionary = wordsDictionary;
+            this.wordsHistory = wordsHistory;
             mistakesCount = new List<List<int>>();
+            wordsCount = new Dictionary<string, int>();
             for (var i = 0; i < settings.IntelligentMistakesData.Count; i++)
             {
                 mistakesCount.Add(new List<int>());
                 for (var j = 0; j < settings.IntelligentMistakesData[i].Count; j++)
                     mistakesCount[i].Add(0);
-
             }
         }
 
         /// <summary>
-        /// Gets the location of specified file.
+        /// 
         /// </summary>
-        /// <param name="fileName">Name of the file.</param>
-        /// <returns>The location of specified file.</returns>
-        protected string GetFileLocation(string fileName) => Path.Combine(baseLocation, fileName);
+        /// <param name="settings"></param>
+        public InstaShitCore(Settings settings) : this(settings, new Dictionary<string, string>(),
+            new Dictionary<string, int>())
+        {
+
+        }
+
+        /// <summary>
+        /// Creates an instance of the InstaShitCore class.
+        /// </summary>
+        /// <param name="data">InstaShitData object which contains settings, words dictionary and words history.</param>
+        public InstaShitCore(InstaShitData data) : this(data.Settings, data.WordsDictionary, data.WordsHistory)
+        {
+
+        }
         
         /// <summary>
         /// Writes the specified string value to the trace listeners if debug mode is turned on.
@@ -105,14 +106,63 @@ namespace InstaShitCore
         }
 
         /// <summary>
-        /// Gets the InstaShit's settings from settings file.
+        /// Gets the InstaShit's settings from local storage.
         /// </summary>
-        /// <returns>The object of Settings class with loaded values.</returns>
-        protected virtual Settings GetSettings(bool ignoreSettings)
+        /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// <returns>The object of Settings class with loaded values or an empty one,
+        /// if there's nothing in the local storage.</returns>
+        public static Settings GetSettings(string baseLocation)
         {
-            if (!ignoreSettings && File.Exists(GetFileLocation("settings.json")))
-                return JsonConvert.DeserializeObject<Settings>(File.ReadAllText(GetFileLocation("settings.json")));
+            if (File.Exists(Path.Combine(baseLocation, "settings.json")))
+                return JsonConvert.DeserializeObject<Settings>(File.ReadAllText(
+                    Path.Combine(baseLocation, "settings.json")));
             return null;
+        }
+
+        /// <summary>
+        /// Gets the words history from local storage.
+        /// </summary>
+        /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// <returns>The Dictionary with loaded values or an empty one,
+        /// if there's nothing in the local storage.</returns>
+        public static Dictionary<string, int> GetWordsHistory(string baseLocation)
+        {
+            if (File.Exists(Path.Combine(baseLocation, "wordsHistory.json")))
+                return JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(
+                    Path.Combine(baseLocation, "wordsHistory.json")));
+            else
+                return new Dictionary<string, int>();
+        }
+
+        /// <summary>
+        /// Gets the words dictionary from local storage.
+        /// </summary>
+        /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// <returns>The Dictionary with loaded values or an empty one,
+        /// if there's nothing in the local storage.</returns>
+        public static Dictionary<string, string> GetWordsDictionary(string baseLocation)
+        {
+            if (File.Exists(Path.Combine(baseLocation, "wordsDictionary.json")))
+                return JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(
+                    Path.Combine(baseLocation, "wordsDictionary.json")));
+            else
+                return new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// Gets the InstaShit data from local storage.
+        /// </summary>
+        /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// <returns>The object of the InstaShitData class with loaded values or an empty one,
+        /// if there's nothing in the local storage.</returns>
+        public static InstaShitData GetInstaShitData(string baseLocation)
+        {
+            return new InstaShitData
+            {
+                Settings = GetSettings(baseLocation),
+                WordsHistory = GetWordsHistory(baseLocation),
+                WordsDictionary = GetWordsDictionary(baseLocation)
+            };
         }
 
         /// <summary>
@@ -135,7 +185,6 @@ namespace InstaShitCore
                 return false;
             childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
             Debug($"childID = {childId}");
-            sessionId = cookieContainer.GetCookies(new Uri("https://instaling.pl"))["PHPSESSID"].Value;
             return true;
         }
 
@@ -191,21 +240,21 @@ namespace InstaShitCore
             };
             if (!wordsCount.ContainsKey(wordId))
                 wordsCount.Add(wordId, 0);
-            if (!words.ContainsKey(word))
-                words.Add(word, wordData["translations"].ToString());
-            if (!sessionCount.ContainsKey(wordId))
-                sessionCount.Add(wordId, 0);
+            if (!wordsDictionary.ContainsKey(word))
+                wordsDictionary.Add(word, wordData["translations"].ToString());
+            if (!wordsHistory.ContainsKey(wordId))
+                wordsHistory.Add(wordId, 0);
             var correctAnswer = AnswerCorrectly(wordId);
             if (!correctAnswer)
             {
-                mistakesCount[sessionCount[wordId]][wordsCount[wordId]]++;
+                mistakesCount[wordsHistory[wordId]][wordsCount[wordId]]++;
                 wordsCount[wordId]++;
                 answer.AnswerWord = await GetWrongWordAsync(word);
             }
             else
             {
                 if (wordsCount[wordId] == 0)
-                    sessionCount[wordId] = -1;
+                    wordsHistory[wordId] = -1;
                 wordsCount[wordId] = -1;
                 answer.AnswerWord = word;
             }
@@ -223,14 +272,15 @@ namespace InstaShitCore
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-                new KeyValuePair<string, string>("version", "cyh5fh7unfrnu8e"),
+                new KeyValuePair<string, string>("version", InstaLingVersion),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
             var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content);
             Debug(resultString);
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             return (jsonResponse["grade"].ToString() == "1" && answer.Word == answer.AnswerWord)
-                   || ((jsonResponse["grade"].ToString() == "0" || jsonResponse["grade"].ToString() == "2") && answer.Word != answer.AnswerWord);
+                   || ((jsonResponse["grade"].ToString() == "0" || jsonResponse["grade"].ToString() == "2") 
+                   && answer.Word != answer.AnswerWord);
         }
 
         /// <summary>
@@ -270,13 +320,15 @@ namespace InstaShitCore
         /// <summary>
         /// Saves the current session's data.
         /// </summary>
-        public void SaveSessionData()
+        public void SaveSessionData(string baseLocation)
         {
-            foreach (var key in sessionCount.Keys.ToList())
-                if (sessionCount[key] != -1 && wordsCount.ContainsKey(key))
-                    sessionCount[key]++;
-            File.WriteAllText(GetFileLocation("wordsHistory.json"), JsonConvert.SerializeObject(sessionCount, Formatting.Indented));
-            File.WriteAllText(GetFileLocation("wordsDictionary.json"), JsonConvert.SerializeObject(words, Formatting.Indented));
+            foreach (var key in wordsHistory.Keys.ToList())
+                if (wordsHistory[key] != -1 && wordsCount.ContainsKey(key))
+                    wordsHistory[key]++;
+            File.WriteAllText(Path.Combine(baseLocation, "wordsHistory.json"), 
+                JsonConvert.SerializeObject(wordsHistory, Formatting.Indented));
+            File.WriteAllText(Path.Combine(baseLocation, "wordsDictionary.json"), 
+                JsonConvert.SerializeObject(wordsDictionary, Formatting.Indented));
         }
 
         // PRIVATE MEMBERS
@@ -303,37 +355,14 @@ namespace InstaShitCore
                     if (word[i] == word[i + 1])
                         return word.Remove(i, 1);
                 }
-                //This doesn't seem to work well, so it's disabled for now
-                /*
-                string stringToReplace = "";
-                string newString;
-                if (word.Contains("c"))
-                {
-                    stringToReplace = "c";
-                    newString = "k";
-                }
-                else if (word.Contains("t"))
-                {
-                    stringToReplace = "t";
-                    newString = "d";
-                }
-                else if (word.Contains("d"))
-                {
-                    stringToReplace = "d";
-                    newString = "t";
-                }
-                else
-                    return "";
-                var regex = new Regex(Regex.Escape(stringToReplace));
-                return regex.Replace(word, newString, 1);
-                */
                 return "";
             }
             else
             {
                 if (!settings.AllowSynonym) return "";
                 var result = await synonymsApiClient.GetAsync("/words?ml=" + word);
-                var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(await result.Content.ReadAsStringAsync());
+                var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(
+                    await result.Content.ReadAsStringAsync());
                 if (synonyms.Count == 0)
                     return "";
                 if (synonyms.Count == 1)
@@ -347,8 +376,8 @@ namespace InstaShitCore
         /// <summary>
         /// Sends the POST request to the specified URL and returns the result of this request as a string value.
         /// </summary>
-        /// <param name="requestUri">The request URL></param>
-        /// <param name="content">The content of this POST Request</param>
+        /// <param name="requestUri">The request URL.</param>
+        /// <param name="content">The content of this POST Request.</param>
         /// <returns>Result of POST request.</returns>
         private async Task<string> GetPostResultAsync(string requestUri, HttpContent content)
         {
@@ -380,15 +409,15 @@ namespace InstaShitCore
         /// <returns>True if the answer should be correct; otherwise, false.</returns>
         private bool AnswerCorrectly(string wordId)
         {
-            if (sessionCount[wordId] == -1 || wordsCount[wordId] == -1 ||
-                sessionCount[wordId] >= settings.IntelligentMistakesData.Count ||
-                wordsCount[wordId] >= settings.IntelligentMistakesData[sessionCount[wordId]].Count ||
-                (settings.IntelligentMistakesData[sessionCount[wordId]][wordsCount[wordId]].MaxNumberOfMistakes !=
-                 -1 && mistakesCount[sessionCount[wordId]][wordsCount[wordId]] >=
-                 settings.IntelligentMistakesData[sessionCount[wordId]][wordsCount[wordId]].MaxNumberOfMistakes))
+            if (wordsHistory[wordId] == -1 || wordsCount[wordId] == -1 ||
+                wordsHistory[wordId] >= settings.IntelligentMistakesData.Count ||
+                wordsCount[wordId] >= settings.IntelligentMistakesData[wordsHistory[wordId]].Count ||
+                (settings.IntelligentMistakesData[wordsHistory[wordId]][wordsCount[wordId]].MaxNumberOfMistakes !=
+                 -1 && mistakesCount[wordsHistory[wordId]][wordsCount[wordId]] >=
+                 settings.IntelligentMistakesData[wordsHistory[wordId]][wordsCount[wordId]].MaxNumberOfMistakes))
                 return true;
             var rndPercentage = rndGenerator.Next(1, 101);
-            return rndPercentage > settings.IntelligentMistakesData[sessionCount[wordId]][wordsCount[wordId]].RiskPercentage;
+            return rndPercentage > settings.IntelligentMistakesData[wordsHistory[wordId]][wordsCount[wordId]].RiskPercentage;
         }
     }
 }
