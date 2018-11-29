@@ -13,7 +13,7 @@ namespace InstaShitCore
     public class InstaShitCore
     {
         // CONST FIELDS
-        private const string InstaLingVersion = "cyh5fh7unfrnu8e";
+        public const string InstaLingVersion = "cyh5fh7unfrnu8e";
 
         // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
@@ -181,7 +181,7 @@ namespace InstaShitCore
             });
             var resultString = await GetPostResultAsync("/teacher.php?page=teacherActions", content);
             Debug("Successfully posted to /teacher.php?page=teacherActions");
-            Debug($"Result from /learning/student.php: {resultString}");
+            Debug($"Result from /learning/main.php: {resultString}");
             if (!resultString.Contains("<title>insta.ling</title>"))
                 return false;
             childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
@@ -222,16 +222,16 @@ namespace InstaShitCore
         /// <returns>Data about the answer.</returns>
         public async Task<Answer> GetAnswerAsync()
         {
-			Dictionary<string, object> wordData;
+            Dictionary<string, object> wordData;
             while(true)
-			{
-				wordData = await GenerateNextWordAsync();
+            {
+                wordData = await GenerateNextWordAsync();
                 if (wordData.ContainsKey("summary"))
                     return null;
-				if (settings.AnswerMarketingQuestions || wordData["type"].ToString() != "marketing")
-					break;
-				Debug("Skipping marketing question");
-			}
+                if (settings.AnswerMarketingQuestions || wordData["type"].ToString() != "marketing")
+                    break;
+                Debug("Skipping marketing question");
+            }
             var word = wordData["word"].ToString();
             var wordId = wordData["id"].ToString();
             var answer = new Answer
