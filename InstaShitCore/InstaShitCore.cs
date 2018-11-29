@@ -43,6 +43,7 @@ namespace InstaShitCore
             {
                 BaseAddress = new Uri("https://instaling.pl")
             };
+            client.DefaultRequestHeaders.Add("User-Agent", UserAgents.IE[rndGenerator.Next(0, 245)]);
             synonymsApiClient = new HttpClient()
             {
                 BaseAddress = new Uri("https://api.datamuse.com")
