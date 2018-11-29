@@ -13,7 +13,7 @@ namespace InstaShitCore
         public List<List<IntelligentMistakesDataEntry>> IntelligentMistakesData { get; set; }
         public bool AllowTypo { get; set; } = true;
         public bool AllowSynonym { get; set; } = true;
-		public bool AnswerMarketingQuestions { get; set; } = true;
+		public bool AnswerMarketingQuestions { get; set; } = false;
         public bool Debug { get; set; } = false;
     }
 }
