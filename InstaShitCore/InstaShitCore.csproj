@@ -2,13 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Authors>Konrad Krawiec</Authors>
     <Company />
-    <Description>Core of InstaShit - bot for Insta.Ling which solves daily sessions.</Description>
+    <Description></Description>
     <PackageProjectUrl>https://instashit.pl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/konrad11901/InstaShitCore</RepositoryUrl>
-    <PackageReleaseNotes>Added User-Agent header to HttpClient.</PackageReleaseNotes>
+    <PackageReleaseNotes>- AnswerMarketingQuestion is now false by default.
+- Removed duplicate User Agents.
+- Other minor cosmetic changes.</PackageReleaseNotes>
     <PackageLicenseUrl>https://raw.githubusercontent.com/konrad11901/InstaShitCore/master/LICENSE</PackageLicenseUrl>
     <RepositoryType />
     <PackageTags>InstaLing Insta.Ling</PackageTags>

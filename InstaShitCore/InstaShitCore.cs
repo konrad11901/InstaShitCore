@@ -43,7 +43,7 @@ namespace InstaShitCore
             {
                 BaseAddress = new Uri("https://instaling.pl")
             };
-            client.DefaultRequestHeaders.Add("User-Agent", UserAgents.IE[rndGenerator.Next(0, 245)]);
+            client.DefaultRequestHeaders.Add("User-Agent", UserAgents.IE[rndGenerator.Next(0, UserAgents.IE.Count)]);
             synonymsApiClient = new HttpClient()
             {
                 BaseAddress = new Uri("https://api.datamuse.com")
@@ -62,9 +62,9 @@ namespace InstaShitCore
         }
 
         /// <summary>
-        /// 
+        /// Creates an instance of the InstaShitCore class.
         /// </summary>
-        /// <param name="settings"></param>
+        /// <param name="settings">InstaShit settings to use in this instance.</param>
         public InstaShitCore(Settings settings) : this(settings, new Dictionary<string, string>(),
             new Dictionary<string, int>())
         {
@@ -219,7 +219,7 @@ namespace InstaShitCore
         /// <summary>
         /// Gets the information about the answer to the question.
         /// </summary>
-        /// <returns>Data about the answer.</returns>
+        /// <returns>Data about the answer or null, if all the questions have been answered.</returns>
         public async Task<Answer> GetAnswerAsync()
         {
             Dictionary<string, object> wordData;
@@ -321,6 +321,7 @@ namespace InstaShitCore
         /// <summary>
         /// Saves the current session's data.
         /// </summary>
+        /// <param name="baseLocation">Location in which session data should be saved.</param>
         public void SaveSessionData(string baseLocation)
         {
             foreach (var key in wordsHistory.Keys.ToList())
