@@ -13,7 +13,8 @@ namespace InstaShitCore
     public class InstaShitCore
     {
         // CONST FIELDS
-        public const string InstaLingVersion = "cyh5fh7unfrnu8e";
+        // Insta.Ling version which has been tested with this InstaShit version
+        public const string DefaultInstaLingVersion = "cp58g1bxblfofrv";
 
         // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
@@ -29,6 +30,11 @@ namespace InstaShitCore
         private string childId;
 
         // PUBLIC AND PROTECTED MEMBERS
+
+        /// <summary>
+        /// Gets the latest Insta.Ling version (read from the Insta.Ling website source).
+        /// </summary>
+        public string LatestInstaLingVersion { get; private set; }
 
         /// <summary>
         /// Creates an instance of the InstaShitCore class.
@@ -186,6 +192,7 @@ namespace InstaShitCore
                 return false;
             childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
             Debug($"childID = {childId}");
+            await UpdateInstaLingVersion();
             return true;
         }
 
@@ -208,6 +215,32 @@ namespace InstaShitCore
             var jsonResponse = JsonConvert.DeserializeObject<Dictionary<string, object>>(resultString);
             Debug("JSONResponse from POST /ling2/server/actions/init_session.php: " + resultString);
             return (bool)jsonResponse["is_new"];
+        }
+
+        /// <summary>
+        /// Updates the Insta.Ling version to the latest one (read from Insta.Ling website source).
+        /// </summary>
+        public async Task UpdateInstaLingVersion()
+        {
+            if (childId == null)
+                throw new InvalidOperationException("User is not logged in");
+            try
+            {
+                var resultString = await GetGetResultAsync("ling2/html_app/app.php?child_id=" + childId);
+                int startIndex = resultString.IndexOf("updateParams(id, answer") + 32;
+                int length = resultString.IndexOf(");", startIndex) - startIndex - 1;
+                string version = resultString.Substring(startIndex, length);
+                Debug("Insta.Ling version = " + version);
+                if (version != DefaultInstaLingVersion)
+                    Debug("WARNING: Insta.Ling has been updated since this InstaShit release!");
+                LatestInstaLingVersion = version;
+            }
+            catch
+            {
+                Debug($"WARNING: An error occured while trying to update Insta.Ling version, using default version " +
+                    $"({DefaultInstaLingVersion})");
+                LatestInstaLingVersion = DefaultInstaLingVersion;
+            }
         }
 
         /// <summary>
@@ -269,11 +302,15 @@ namespace InstaShitCore
         /// <returns>True if the attempt to answer the question was successful; otherwise, false.</returns>
         public async Task<bool> TryAnswerQuestionAsync(Answer answer)
         {
+            if (childId == null)
+                throw new InvalidOperationException("User is not logged in");
+            if (LatestInstaLingVersion == null)
+                await UpdateInstaLingVersion();
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("child_id", childId),
                 new KeyValuePair<string, string>("word_id", answer.WordId),
-                new KeyValuePair<string, string>("version", InstaLingVersion),
+                new KeyValuePair<string, string>("version", LatestInstaLingVersion),
                 new KeyValuePair<string, string>("answer", answer.AnswerWord)
             });
             var resultString = await GetPostResultAsync("/ling2/server/actions/save_answer.php", content);
@@ -290,6 +327,8 @@ namespace InstaShitCore
         /// <returns>Results of today's training.</returns>
         public async Task<ChildResults> GetResultsAsync()
         {
+            if (childId == null)
+                throw new InvalidOperationException("User is not logged in");
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("child_id", childId),
@@ -362,9 +401,8 @@ namespace InstaShitCore
             else
             {
                 if (!settings.AllowSynonym) return "";
-                var result = await synonymsApiClient.GetAsync("/words?ml=" + word);
                 var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(
-                    await result.Content.ReadAsStringAsync());
+                    await GetGetResultAsync("/words?ml= " + word));
                 if (synonyms.Count == 0)
                     return "";
                 if (synonyms.Count == 1)
@@ -384,6 +422,17 @@ namespace InstaShitCore
         private async Task<string> GetPostResultAsync(string requestUri, HttpContent content)
         {
             var result = await client.PostAsync(requestUri, content);
+            return await result.Content.ReadAsStringAsync();
+        }
+
+        /// <summary>
+        /// Sends the GET request to the specified URL and returns the result of this request as a string value.
+        /// </summary>
+        /// <param name="requestUri">The request URL.</param>
+        /// <returns>Result of GET request.</returns>
+        private async Task<string> GetGetResultAsync(string requestUri)
+        {
+            var result = await client.GetAsync(requestUri);
             return await result.Content.ReadAsStringAsync();
         }
 
