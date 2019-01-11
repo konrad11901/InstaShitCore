@@ -401,8 +401,9 @@ namespace InstaShitCore
             else
             {
                 if (!settings.AllowSynonym) return "";
+                var result = await synonymsApiClient.GetAsync("/words?ml=" + word);
                 var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(
-                    await GetGetResultAsync("/words?ml= " + word));
+                    await result.Content.ReadAsStringAsync());
                 if (synonyms.Count == 0)
                     return "";
                 if (synonyms.Count == 1)
