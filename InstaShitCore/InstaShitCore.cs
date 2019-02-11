@@ -14,7 +14,7 @@ namespace InstaShitCore
     {
         // CONST FIELDS
         // Insta.Ling version which has been tested with this InstaShit version
-        public const string DefaultInstaLingVersion = "wif0zy4ty6nte8";
+        public const string DefaultInstaLingVersion = "fwif0zy4ty6nte8";
 
         // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
