@@ -14,7 +14,7 @@ namespace InstaShitCore
     {
         // CONST FIELDS
         // Insta.Ling version which has been tested with this InstaShit version
-        public const string DefaultInstaLingVersion = "cp58g1bxblfofrv";
+        public const string DefaultInstaLingVersion = "wif0zy4ty6nte8";
 
         // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
@@ -255,6 +255,8 @@ namespace InstaShitCore
         /// <returns>Data about the answer or null, if all the questions have been answered.</returns>
         public async Task<Answer> GetAnswerAsync()
         {
+            if (childId == null)
+                throw new InvalidOperationException("User is not logged in");
             Dictionary<string, object> wordData;
             while(true)
             {
