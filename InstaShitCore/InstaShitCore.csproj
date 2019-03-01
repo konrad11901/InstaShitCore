@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.1.5</Version>
+    <Version>1.1.6</Version>
     <Authors>Konrad Krawiec</Authors>
     <Company />
     <Description>Core of InstaShit - bot for Insta.Ling which solves daily sessions.</Description>
     <PackageProjectUrl>https://instashit.pl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/konrad11901/InstaShitCore</RepositoryUrl>
-    <PackageReleaseNotes>Updated supported Insta.Ling version.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed IE user agents and made a few minor changes to the code.</PackageReleaseNotes>
     <PackageLicenseUrl>https://raw.githubusercontent.com/konrad11901/InstaShitCore/master/LICENSE</PackageLicenseUrl>
     <RepositoryType />
     <PackageTags>InstaLing Insta.Ling</PackageTags>
