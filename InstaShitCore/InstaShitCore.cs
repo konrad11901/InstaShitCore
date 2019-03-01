@@ -102,9 +102,9 @@ namespace InstaShitCore
         protected bool DebugMode => settings.Debug;
 
         /// <summary>
-        /// Gets the number of miliseconds since 1970/01/01 (equivalent of JavaScript GetTime() function).
+        /// Gets the number of milliseconds since 1970/01/01 (equivalent of JavaScript GetTime() function).
         /// </summary>
-        /// <returns>The number of miliseconds since 1970/01/01.</returns>
+        /// <returns>The number of milliseconds since 1970/01/01.</returns>
         public static int GetJsTime()
         {
             var dateTime = new DateTime(1970, 1, 1);
@@ -227,8 +227,8 @@ namespace InstaShitCore
             try
             {
                 var resultString = await GetGetResultAsync("ling2/html_app/app.php?child_id=" + childId);
-                int startIndex = resultString.IndexOf("updateParams(id, answer") + 32;
-                int length = resultString.IndexOf(");", startIndex) - startIndex - 1;
+                int startIndex = resultString.IndexOf("updateParams(id, answer", StringComparison.Ordinal) + 32;
+                int length = resultString.IndexOf(");", startIndex, StringComparison.Ordinal) - startIndex - 1;
                 string version = resultString.Substring(startIndex, length);
                 Debug("Insta.Ling version = " + version);
                 if (version != DefaultInstaLingVersion)
@@ -246,7 +246,7 @@ namespace InstaShitCore
         /// <summary>
         /// Gets the time to wait before continuing.
         /// </summary>
-        /// <returns>The number of miliseconds to wait.</returns>
+        /// <returns>The number of milliseconds to wait.</returns>
         public int SleepTime => rndGenerator.Next(settings.MinimumSleepTime, settings.MaximumSleepTime + 1);
 
         /// <summary>
@@ -388,31 +388,33 @@ namespace InstaShitCore
             // 1 - answer with a typo (TODO)
             // 2 - synonym
             var mistakeType = rndGenerator.Next(0, 3);
-            if (mistakeType == 0)
-                return "";
-            else if (mistakeType == 1)
+            switch (mistakeType)
             {
-                if (!settings.AllowTypo) return "";
-                for (var i = 0; i < word.Length - 1; i++)
-                {
-                    if (word[i] == word[i + 1])
-                        return word.Remove(i, 1);
-                }
-                return "";
-            }
-            else
-            {
-                if (!settings.AllowSynonym) return "";
-                var result = await synonymsApiClient.GetAsync("/words?ml=" + word);
-                var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(
-                    await result.Content.ReadAsStringAsync());
-                if (synonyms.Count == 0)
+                case 0:
+                case 1 when !settings.AllowTypo:
                     return "";
-                if (synonyms.Count == 1)
-                    return synonyms[0]["word"].ToString();
-                int maxRnd;
-                maxRnd = synonyms.Count == 2 ? 2 : 3;
-                return synonyms[rndGenerator.Next(0, maxRnd)]["word"].ToString();
+                case 1:
+                {
+                    for (var i = 0; i < word.Length - 1; i++)
+                    {
+                        if (word[i] == word[i + 1])
+                            return word.Remove(i, 1);
+                    }
+                    return "";
+                }
+                default:
+                {
+                    if (!settings.AllowSynonym) return "";
+                    var result = await synonymsApiClient.GetAsync("/words?ml=" + word);
+                    var synonyms = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(
+                        await result.Content.ReadAsStringAsync());
+                    if (synonyms.Count == 0)
+                        return "";
+                    if (synonyms.Count == 1)
+                        return synonyms[0]["word"].ToString();
+                    int maxRnd = synonyms.Count == 2 ? 2 : 3;
+                    return synonyms[rndGenerator.Next(0, maxRnd)]["word"].ToString();
+                }
             }
         }
 
