@@ -197,7 +197,7 @@ namespace InstaShitCore
             var length = resultString.IndexOf('"', startIndex) - startIndex;
             childId = resultString.Substring(startIndex, length);
             Debug($"childID = {childId}");
-            await UpdateInstaLingVersion();
+            await UpdateInstaLingVersionAsync();
             return true;
         }
 
@@ -225,7 +225,7 @@ namespace InstaShitCore
         /// <summary>
         /// Updates the Insta.Ling version to the latest one (read from Insta.Ling website source).
         /// </summary>
-        public async Task UpdateInstaLingVersion()
+        public async Task UpdateInstaLingVersionAsync()
         {
             if (childId == null)
                 throw new InvalidOperationException("User is not logged in");
@@ -312,7 +312,7 @@ namespace InstaShitCore
             if (childId == null)
                 throw new InvalidOperationException("User is not logged in");
             if (LatestInstaLingVersion == null)
-                await UpdateInstaLingVersion();
+                await UpdateInstaLingVersionAsync();
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("child_id", childId),
