@@ -13,8 +13,8 @@ namespace InstaShitCore
     public class InstaShitCore
     {
         // CONST FIELDS
-        // Insta.Ling version which has been tested with this InstaShit version
-        public const string DefaultInstaLingVersion = "fwif0zy4ty6nte8";
+        // Insta.Ling version which has been tested with this InstaShitCore version
+        public const string DefaultInstaLingVersion = "gadzinlr0muzb9862ew0";
 
         // PRIVATE READONLY FIELDS
         private readonly HttpClient client;
@@ -116,13 +116,14 @@ namespace InstaShitCore
         /// Gets the InstaShit's settings from local storage.
         /// </summary>
         /// <param name="baseLocation">Location of the InstaShit files.</param>
-        /// <returns>The object of Settings class with loaded values or an empty one,
+        /// <param name="fileName">Name of the settings file (with extension).</param>
+        /// <returns>The object of Settings class with loaded values or null,
         /// if there's nothing in the local storage.</returns>
-        public static Settings GetSettings(string baseLocation)
+        public static Settings GetSettings(string baseLocation, string fileName = "settings.json")
         {
-            if (File.Exists(Path.Combine(baseLocation, "settings.json")))
+            if (File.Exists(Path.Combine(baseLocation, fileName)))
                 return JsonConvert.DeserializeObject<Settings>(File.ReadAllText(
-                    Path.Combine(baseLocation, "settings.json")));
+                    Path.Combine(baseLocation, fileName)));
             return null;
         }
 
@@ -130,13 +131,14 @@ namespace InstaShitCore
         /// Gets the words history from local storage.
         /// </summary>
         /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// /// <param name="fileName">Name of the words history file (with extension).</param>
         /// <returns>The Dictionary with loaded values or an empty one,
         /// if there's nothing in the local storage.</returns>
-        public static Dictionary<string, int> GetWordsHistory(string baseLocation)
+        public static Dictionary<string, int> GetWordsHistory(string baseLocation, string fileName = "wordsHistory.json")
         {
-            if (File.Exists(Path.Combine(baseLocation, "wordsHistory.json")))
+            if (File.Exists(Path.Combine(baseLocation, fileName)))
                 return JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(
-                    Path.Combine(baseLocation, "wordsHistory.json")));
+                    Path.Combine(baseLocation, fileName)));
             else
                 return new Dictionary<string, int>();
         }
@@ -145,13 +147,14 @@ namespace InstaShitCore
         /// Gets the words dictionary from local storage.
         /// </summary>
         /// <param name="baseLocation">Location of the InstaShit files.</param>
+        /// /// <param name="fileName">Name of the words dictionary file (with extension).</param>
         /// <returns>The Dictionary with loaded values or an empty one,
         /// if there's nothing in the local storage.</returns>
-        public static Dictionary<string, string> GetWordsDictionary(string baseLocation)
+        public static Dictionary<string, string> GetWordsDictionary(string baseLocation, string fileName = "wordsDictionary.json")
         {
-            if (File.Exists(Path.Combine(baseLocation, "wordsDictionary.json")))
+            if (File.Exists(Path.Combine(baseLocation, fileName)))
                 return JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(
-                    Path.Combine(baseLocation, "wordsDictionary.json")));
+                    Path.Combine(baseLocation, fileName)));
             else
                 return new Dictionary<string, string>();
         }
@@ -190,7 +193,9 @@ namespace InstaShitCore
             Debug($"Result from /learning/main.php: {resultString}");
             if (!resultString.Contains("<title>insta.ling</title>"))
                 return false;
-            childId = resultString.Substring(resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9, 6);
+            var startIndex = resultString.IndexOf("child_id=", StringComparison.Ordinal) + 9;
+            var length = resultString.IndexOf('"', startIndex) - startIndex;
+            childId = resultString.Substring(startIndex, length);
             Debug($"childID = {childId}");
             await UpdateInstaLingVersion();
             return true;
