@@ -8,6 +8,5 @@ InstaShitCore is available as a [NuGet package](https://www.nuget.org/packages/I
 
 ## Support status
 
-This repository has **limited** support and the development of InstaShitCore is currently suspended. This **does not** apply to bug fixes, which will still be provided.
-
-You are still welcome to open new issues (but please note that I'll not accept feature requests) and create pull requests.
+The whole project is discontinued and will not receive any updates. Insta.Ling's authors have introduced breaking changes since the InstaShit's development.  
+If you wish to work on this project, feel free to fork any of the InstaShit's repositories.
